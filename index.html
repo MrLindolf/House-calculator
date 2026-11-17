@@ -474,9 +474,6 @@
         show("mortgageAmount", money(mortgage));
         show("newPantbrev", money(newPantbrev));
 
-        status.textContent = "● Results are up to date";
-        status.className = "";
-
       } catch (error) {
         for (const id of resultIds) {
           show(id, "—");
