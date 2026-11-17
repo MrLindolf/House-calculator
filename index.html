@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>House-cost calculator</title>
+
+  <style>
+    /* Colours and overall appearance */
+    :root {
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: #14243b;
+      background: #f1f5fa;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 32px 20px;
+    }
+
+    main {
+      max-width: 1120px;
+      margin: auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 5vw, 38px);
+    }
+
+    .subtitle, .note, .per-person {
+      color: #607086;
+    }
+
+    .subtitle {
+      margin: 8px 0 26px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .card {
+      padding: 24px;
+      background: white;
+      border: 1px solid #d4dfec;
+      border-radius: 16px;
+      box-shadow: 0 4px 18px #14243b06;
+    }
+
+    h2 {
+      margin: 0 0 20px;
+      font-size: 23px;
+    }
+
+    .field {
+      display: grid;
+      grid-template-columns: 1fr 160px;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    label {
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    label small {
+      display: block;
+      color: #607086;
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    input {
+      width: 100%;
+      min-width: 0;
+      padding: 11px 12px;
+      border: 1px solid #bdcadb;
+      border-radius: 8px;
+      background: white;
+      color: #14243b;
+      font: inherit;
+      text-align: right;
+    }
+
+    input:focus {
+      outline: 3px solid #175fc425;
+      border-color: #175fc4;
+    }
+
+    input[aria-invalid="true"] {
+      border-color: #b42318;
+    }
+
+    hr {
+      border: 0;
+      border-top: 1px solid #d4dfec;
+      margin: 24px 0;
+    }
+
+    .monthly {
+      background: #e8f1ff;
+      border-color: #b8d2f7;
+      margin-bottom: 20px;
+    }
+
+    .total {
+      color: #175fc4;
+      font-size: clamp(30px, 4vw, 44px);
+      font-weight: 700;
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .per-person {
+      margin: 6px 0 20px;
+      font-size: 17px;
+    }
+
+    dl {
+      margin: 0;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      margin: 13px 0;
+      font-size: 15px;
+    }
+
+    dt {
+      flex: 1;
+    }
+
+    dd {
+      margin: 0;
+      text-align: right;
+      font-weight: 600;
+    }
+
+    .note {
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .mortgage-details {
+      margin: 18px 4px 10px;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #607086;
+    }
+
+    #status.error {
+      color: #b42318;
+    }
+
+    /* Stack the columns on phones */
+    @media (max-width: 760px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      body {
+        padding: 22px 12px;
+      }
+
+      .card {
+        padding: 20px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .field {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>House-cost calculator</h1>
+    <p class="subtitle">Plan your purchase and monthly budget</p>
+
+    <div class="layout">
+
+      <!-- Left column: inputs -->
+      <section class="card" aria-label="Calculator inputs">
+        <h2>House &amp; mortgage</h2>
+
+        <div class="field">
+          <label for="price">House price (SEK)</label>
+          <input id="price" type="text" inputmode="decimal"
+                 value="4500000">
+        </div>
+
+        <div class="field">
+          <label for="deposit">Deposit (%)</label>
+          <input id="deposit" type="text" inputmode="decimal" value="20">
+        </div>
+
+        <div class="field">
+          <label for="interest">Annual interest (%)</label>
+          <input id="interest" type="text" inputmode="decimal" value="3.8">
+        </div>
+
+        <div class="field">
+          <label for="amortization">Annual amortization (%)</label>
+          <input id="amortization" type="text" inputmode="decimal" value="2">
+        </div>
+
+        <div class="field">
+          <label for="running">
+            Monthly running costs (SEK)
+            <small>Exclude any property fee entered below</small>
+          </label>
+          <input id="running" type="text" inputmode="decimal" value="4000">
+        </div>
+
+        <div class="field">
+          <label for="propertyFee">
+            Annual property fee / tax (SEK)
+            <small>Optional · divided by 12</small>
+          </label>
+          <input id="propertyFee" type="text" inputmode="decimal"
+                 placeholder="Optional">
+        </div>
+
+        <hr>
+
+        <h2>Purchase &amp; moving</h2>
+
+        <div class="field">
+          <label for="pantbrev">Existing pantbrev total (SEK)</label>
+          <input id="pantbrev" type="text" inputmode="decimal"
+                 value="3705000">
+        </div>
+
+        <div class="field">
+          <label for="moving">Moving budget after RUT (SEK)</label>
+          <input id="moving" type="text" inputmode="decimal" value="8000">
+        </div>
+
+        <div class="field">
+          <label for="taxValue">
+            Previous year's taxeringsvärde (SEK)
+            <small>Optional · otherwise uses purchase price</small>
+          </label>
+          <input id="taxValue" type="text" inputmode="decimal"
+                 placeholder="Optional">
+        </div>
+
+        <p class="note">
+          Enter numbers without thousands separators, such as 4500000.
+          For decimals, either 3.8 or 3,8 works.
+        </p>
+      </section>
+
+      <!-- Right column: results -->
+      <section aria-label="Calculation results">
+        <div class="card monthly">
+          <h2>Monthly payment</h2>
+          <p class="total" id="monthlyTotal">—</p>
+          <p class="per-person" id="monthlyPerson">—</p>
+
+          <hr>
+
+          <dl>
+            <div class="result-row">
+              <dt>Interest</dt>
+              <dd id="monthlyInterest">—</dd>
+            </div>
+            <div class="result-row">
+              <dt>Amortization</dt>
+              <dd id="monthlyAmortization">—</dd>
+            </div>
+            <div class="result-row">
+              <dt>Running costs, excluding property fee</dt>
+              <dd id="monthlyRunning">—</dd>
+            </div>
+            <div class="result-row">
+              <dt>Property fee / tax</dt>
+              <dd id="monthlyPropertyFee">—</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="card">
+          <h2>Cash needed to buy</h2>
+          <p class="total" id="cashTotal">—</p>
+          <p class="per-person" id="cashPerson">—</p>
+
+          <hr>
+
+          <dl>
+            <div class="result-row">
+              <dt>Deposit</dt>
+              <dd id="depositAmount">—</dd>
+            </div>
+            <div class="result-row">
+              <dt>Lagfart</dt>
+              <dd id="lagfartCost">—</dd>
+            </div>
+            <div class="result-row">
+              <dt>New pantbrev fees</dt>
+              <dd id="pantbrevCost">—</dd>
+            </div>
+            <div class="result-row">
+              <dt>Moving</dt>
+              <dd id="movingCost">—</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="mortgage-details">
+          Mortgage: <strong id="mortgageAmount">—</strong><br>
+          New pantbrev amount: <strong id="newPantbrev">—</strong>
+        </div>
+
+        <p class="note">
+          Monthly payments are before interest tax relief.
+          Cash needed excludes a separate savings buffer, inspection,
+          cleaning and bank fees.
+          Pantbrev fees assume one new inteckning, with its amount
+          rounded up to whole thousands.
+          This calculator is for an ordinary house purchase by
+          private individuals.
+        </p>
+      </section>
+    </div>
+
+    <p id="status" role="status" aria-live="polite"></p>
+  </main>
+
+  <script>
+    // Find the input boxes
+    const inputIds = [
+      "price", "deposit", "interest", "amortization",
+      "running", "propertyFee", "pantbrev", "moving", "taxValue"
+    ];
+
+    const resultIds = [
+      "monthlyTotal", "monthlyPerson", "monthlyInterest",
+      "monthlyAmortization", "monthlyRunning", "monthlyPropertyFee",
+      "cashTotal", "cashPerson", "depositAmount", "lagfartCost",
+      "pantbrevCost", "movingCost", "mortgageAmount", "newPantbrev"
+    ];
+
+    const status = document.getElementById("status");
+
+    // Format numbers for display
+    const numberFormat = new Intl.NumberFormat("en-GB", {
+      maximumFractionDigits: 0
+    });
+
+    function money(value) {
+      return numberFormat.format(value) + " SEK";
+    }
+
+    function show(id, text) {
+      document.getElementById(id).textContent = text;
+    }
+
+    // Read and validate a number
+    function readNumber(id, optional = false) {
+      const box = document.getElementById(id);
+      const text = box.value.trim().replace(",", ".");
+
+      if (optional && text === "") {
+        return 0;
+      }
+
+      // Accept digits and one decimal point, but no other characters
+      const validFormat = /^(?:\d+(?:\.\d*)?|\.\d+)$/.test(text);
+      const value = Number(text);
+
+      if (!validFormat || !Number.isFinite(value) || value < 0) {
+        box.setAttribute("aria-invalid", "true");
+        throw new Error("Please enter valid numbers without thousands separators.");
+      }
+
+      return value;
+    }
+
+    function calculate() {
+      for (const id of inputIds) {
+        document.getElementById(id).removeAttribute("aria-invalid");
+      }
+
+      try {
+        const price = readNumber("price");
+        const depositPercent = readNumber("deposit");
+        const interestPercent = readNumber("interest");
+        const amortizationPercent = readNumber("amortization");
+        const running = readNumber("running");
+        const propertyFee = readNumber("propertyFee", true);
+        const existingPantbrev = readNumber("pantbrev");
+        const moving = readNumber("moving");
+        const taxValue = readNumber("taxValue", true);
+
+        if (price <= 0) {
+          document.getElementById("price")
+            .setAttribute("aria-invalid", "true");
+          throw new Error("House price must be above zero.");
+        }
+
+        if (depositPercent > 100) {
+          document.getElementById("deposit")
+            .setAttribute("aria-invalid", "true");
+          throw new Error("Deposit must be between 0 and 100%.");
+        }
+
+        // Deposit and mortgage
+        const deposit = price * depositPercent / 100;
+        const mortgage = price - deposit;
+
+        // Monthly payments
+        const monthlyInterest = mortgage * interestPercent / 100 / 12;
+        const monthlyAmortization =
+          mortgage * amortizationPercent / 100 / 12;
+        const monthlyPropertyFee = propertyFee / 12;
+
+        const monthlyTotal =
+          monthlyInterest + monthlyAmortization +
+          running + monthlyPropertyFee;
+
+        // Lagfart
+        const lagfartBasis =
+          Math.floor(Math.max(price, taxValue) / 1000) * 1000;
+        const lagfartCost = lagfartBasis * 0.015 + 825;
+
+        // New pantbrev and fees
+        const shortfall = Math.max(0, mortgage - existingPantbrev);
+        const newPantbrev = Math.ceil(shortfall / 1000) * 1000;
+        const pantbrevCost =
+          newPantbrev > 0 ? newPantbrev * 0.02 + 375 : 0;
+
+        const cashTotal = deposit + lagfartCost + pantbrevCost + moving;
+
+        if (![monthlyTotal, cashTotal].every(Number.isFinite)) {
+          throw new Error("The entered numbers are too large.");
+        }
+
+        // Display results
+        show("monthlyTotal", money(monthlyTotal));
+        show("monthlyPerson", money(monthlyTotal / 2) + " per person");
+        show("monthlyInterest", money(monthlyInterest));
+        show("monthlyAmortization", money(monthlyAmortization));
+        show("monthlyRunning", money(running));
+        show("monthlyPropertyFee", money(monthlyPropertyFee));
+
+        show("cashTotal", money(cashTotal));
+        show("cashPerson", money(cashTotal / 2) + " per person");
+        show("depositAmount", money(deposit));
+        show("lagfartCost", money(lagfartCost));
+        show("pantbrevCost", money(pantbrevCost));
+        show("movingCost", money(moving));
+        show("mortgageAmount", money(mortgage));
+        show("newPantbrev", money(newPantbrev));
+
+        status.textContent = "● Results are up to date";
+        status.className = "";
+
+      } catch (error) {
+        for (const id of resultIds) {
+          show(id, "—");
+        }
+
+        status.textContent = error.message;
+        status.className = "error";
+      }
+    }
+
+    // Update whenever an input changes
+    for (const id of inputIds) {
+      document.getElementById(id).addEventListener("input", calculate);
+    }
+
+    // Calculate the starting values
+    calculate();
+  </script>
+</body>
+</html>
